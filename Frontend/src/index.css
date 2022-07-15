@@ -1,0 +1,209 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap');
+
+/* base styles */
+* {
+  margin: 0;
+  font-family: "Quicksand";
+  color: #333;
+}
+.navbar {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  max-width: 900px;
+  margin: 0 auto;
+  border-bottom: 1px solid #f2f2f2;
+}
+.navbar h1 {
+  color: #f1356d;
+  
+}
+.navbar img{
+  float: left;
+}
+.navbar .links {
+  margin-left: auto;
+}
+.navbar a {
+  margin-left: 16px;
+  text-decoration: none;
+  padding: 6px;
+}
+.navbar a:hover {
+  color: #f1356d;
+}
+.content {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 20px;
+}
+
+.preview{
+  margin: 60px 0px;
+  padding: 10px 16px;
+  
+  border-bottom: 1px solid #fafafa;
+
+}
+
+.preview:hover{
+  box-shadow: 1px 3px 5px rgba(0, 0, 0, 0.1);
+
+}
+
+.preview h2{
+  font-size: 20px;
+  margin-top: 15px;
+
+  color: #f1356d;
+  margin-bottom: 8px;
+}
+
+.preview a{
+  text-decoration: none;
+}
+
+.profile_list_img{
+  float: left;
+  margin-right: 10px;
+}
+
+.blog_list_img{
+  float: none;
+}
+
+
+
+
+.blog-body h2 {
+  font-size: 20px;
+  color: #f1356d;
+  margin-bottom: 10px;
+}
+.blog-body p {
+  margin: 20px 0;
+}
+
+
+
+
+/* create new blog form */
+.create {
+  max-width: 400px;
+  margin: 0 auto;
+  text-align: center;
+}
+.create label {
+  text-align: left;
+  display: block;
+}
+.create h2 {
+  font-size: 20px;
+  color: #f1356d;
+  margin-bottom: 30px;
+}
+
+textarea {
+  width: 300px;
+  height: 150px;
+}
+.create input, .create textarea, .create select {
+  width: 100%;
+  padding: 6px 10px;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+  display: block;
+}
+.create button {
+  background: #f1356d;
+  color: #fff;
+  border: 0;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+
+/*signup page*/
+.sign-up {
+  max-width: 400px;
+  margin: 0 auto;
+  text-align: center;
+}
+.sign-up label {
+  text-align: left;
+  display: block;
+}
+
+.sign-up input{
+  width: 100%;
+  padding: 6px 10px;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+  display: block;
+}
+
+.sign-up button{
+  background: #f1356d;
+  color: #fff;
+  border: 0;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/*login page*/
+
+.login {
+  max-width: 400px;
+  margin: 0 auto;
+  text-align: center;
+}
+.login label {
+  text-align: left;
+  display: block;
+}
+
+.login input{
+  width: 100%;
+  padding: 6px 10px;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+  display: block;
+}
+
+.login button{
+  background: #f1356d;
+  color: #fff;
+  border: 0;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.newBlogButton{
+  background: blue;
+  color: #fff;
+  border: 0;
+  padding: 8px;
+  font-size: large;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-left: 300px;
+  margin-top: 20px;
+}
+
+.blogButton{
+  background: #f1356d;
+  color: #fff;
+  border: 0;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-right: 5px;
+  margin-top: 5px;
+  
+}
