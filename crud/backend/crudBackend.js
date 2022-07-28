@@ -5,10 +5,27 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { use } = require('express/lib/application');
+var cors = require('cors');
 require('dotenv').config();
 const app = express();
+const path = require('path');
 
+const multer = require('multer');
+const { request } = require('http');
 
+const storage = multer.diskStorage({
+    destination: (requests , file , cb) => {
+        cb(null,'Images')
+    },
+    filename: (requests , file  , cb) =>{
+        console.log(file)
+        cb(null , Date.now()+path.extname(file.originalname))
+    }
+})
+
+const upload = multer({storage : storage});
+
+app.use(cors())
 app.use(express.json())
 
 // Create the connection pool. The pool-specific settings are the defaults
@@ -28,34 +45,50 @@ connection.connect((error)=>{
 });
 
 
+// app.post("/uploadImage" ,upload.single("image") ,(req , res)=>{
+    
+    
+    
+// })
+
+// app.get("/usersimg",(req,res)=>{
+//     res.send("1657707334877.png")
+// })
+
+app.use('/images', express.static('images'));
+
+
 //-----------login to profile-------------
+
+
+
 app.post('/login',(req, res)=>{
     
     const {userName , password} = req.body;
+    console.log(password);
     
     let sql= "Select * from userinfo where userName = ?";
-    // const userr = req.body.userID;
-    // const user = { : userr};
-
-    //  console.log(user.name);
+    
    connection.query(sql,[userName], (err, rows, fields) =>{
-       if(err){
-           res.send("login unsuccessfull")
+       if(err || rows[0] == null){
+        res.json({auth:false , message:"Login Unsuccessfull!!"})
+        
        }
        else{
+        
        const pass = rows[0].password;
        bcrypt.compare(password , pass ,(err , result)=>{
         if(result){
     
             const user = { id : rows[0].userID}
-            console.log(user)
+            
          //    console.log(user);
             
              const accessToken = jwt.sign(user , process.env.secretToken);
-                res.send(accessToken)
+                res.json({auth:true , token: accessToken})
             }
             else{
-             res.send("Login Unsuccessfull!!")
+             res.json({auth:false , message:"Login Unsuccessfull!!"})
             }
 
        });
@@ -68,17 +101,19 @@ app.post('/login',(req, res)=>{
 
 
 //-----------Sign-in to profile-------------
-app.post('/sign-up',async(req, res)=>{
+app.post('/sign-up',upload.single("image"),async(req, res)=>{
     let hashedPass;
-    const { userID ,userName , fullName , email , password} = req.body;
+    const imageName = req.file.filename;
+    const { userName , FullName , email , password} = req.body;
         const hash = await bcrypt.hash(password,10)
-        let sql= "INSERT INTO userinfo(userID, userName , fullName , email , password)\
-           VALUES (?, ?, ?, ?, ?)";
+        let sql= "INSERT INTO userinfo( userName , fullName , email , password , imageName)\
+           VALUES ( ?, ?, ?, ? , ?)";
            console.log(hash);
            
-         connection.query(sql,[userID , userName , fullName , email ,hash ], (err, rows, fields) =>{
+         connection.query(sql,[ userName , FullName , email ,hash , imageName ], (err, rows, fields) =>{
              if(err){
                  res.send("sign up unsuccessfull !!!\nuserName , email and password must be unique and non empty")
+                 console.log(err.message);
              }
              else{
                res.send('SignUp Successfull');
@@ -91,21 +126,21 @@ app.post('/sign-up',async(req, res)=>{
 
 
 
-app.use(authorizatin)
+
 
 
 //-----------Show all users-------------
- app.get('/users',(req, res)=>{
-    connection.query("SELECT userID , userName , FullName , email FROM userinfo", (err, rows, fields) =>{
+ app.get('/users',authorizatin,(req, res)=>{
+    connection.query("SELECT userID , userName , FullName , email ,imageName FROM userinfo", (err, rows, fields) =>{
         res.send(rows);
      })
  });
 
 
  //-----------Show individual user-------------
- app.get('/user/:userID',(req, res)=>{
+ app.get('/user/:userID',authorizatin,(req, res)=>{
      console.log(req.params.userID)
-    connection.query("SELECT userID , userName , FullName , email FROM userinfo WHERE userID = ?",[req.params.userID], (err, rows, fields) =>{
+    connection.query("SELECT userID , userName , FullName , email , imageName FROM userinfo WHERE userID = ?",[req.params.userID], (err, rows, fields) =>{
         res.send(rows);
      })
  })
@@ -119,7 +154,7 @@ app.use(authorizatin)
  
 
 //-----------Show my profile-------------
-app.get('/user/me',(req, res)=>{
+app.get('/user-me',authorizatin,(req, res)=>{
     console.log(req.user.id)
     connection.query("SELECT userID , userName , FullName , email FROM userinfo WHERE userID = ?",[req.user.id], (err, rows, fields) =>{
         res.send(rows);
@@ -128,9 +163,9 @@ app.get('/user/me',(req, res)=>{
 
 
  //-----------Show all posts-------------
-app.get('/posts', (req , res)=>{
+app.get('/posts',authorizatin, (req , res)=>{
 
-    sql = "SELECT postNo ,  blogTitle , FullName as Author, blogdes \
+    sql = "SELECT postNo ,  blogTitle , blogtable.imageName ,  FullName as Author, blogdes \
      FROM blogtable , userinfo where blogtable.userID = userinfo.userID"
     connection.query(sql, (err, rows, fields) =>{
         if(err){
@@ -143,13 +178,14 @@ app.get('/posts', (req , res)=>{
  })
 
 
- //-----------update profile-------------
-app.put('/users' , async(req,res)=>{
+ //----- ------update profile-------------
+app.put('/users' ,authorizatin ,async(req,res)=>{
 
     const {userName , FullName , password} = req.body;
     const {id:userID}=req.user;
     let temp = null;
     let sql = null;
+    
     
     if(userName != undefined){
         sql = "Update userinfo set userName = ? where userID = ?";
@@ -181,7 +217,7 @@ app.put('/users' , async(req,res)=>{
 
 
 //-----------Show specific users post-------------
- app.get('/posts/:userName', (req , res)=>{
+ app.get('/posts/:userName',authorizatin, (req , res)=>{
      
     connection.query("SELECT blogTitle , blogdes FROM blogtable , userinfo where userinfo.userID=blogtable.userID and userName=?",[req.params.userName], (err, rows, fields) =>{
        if(rows == 0){
@@ -193,19 +229,33 @@ app.put('/users' , async(req,res)=>{
      })
  })
 
- 
-//-----------lcreate a new blog-------------
-app.post('/blog', (req , res)=>{
+ //-----------Show specific post-------------
+ app.get('/post/:id', authorizatin,(req , res)=>{
      
+    connection.query("SELECT blogTitle , blogdes , blogtable.imageName ,  FullName as Author FROM blogtable , userinfo where userinfo.userID=blogtable.userID and postNo=?",[req.params.id], (err, rows, fields) =>{
+       if(rows == 0){
+            res.send("Unknown username ... Please check again");
+       }
+       else{
+            res.send(rows);
+       }
+     })
+ })
+
+ 
+//-----------create a new blog-------------
+app.post('/blog',authorizatin,upload.single("image"), (req , res)=>{
+    const imageName = req.file.filename;
     const { blogTitle , blogdes} = req.body;
     const {id:userID}=req.user;
+    // const userID = 10;
     console.log(userID);
      
-     let sql= "INSERT INTO blogtable(userID ,blogTitle , blogdes)\
-      VALUES (?, ?, ?)";
+     let sql= "INSERT INTO blogtable(userID ,blogTitle , blogdes , imageName)\
+      VALUES (?, ?, ? , ?)";
       
       
-    connection.query(sql,[userID ,blogTitle , blogdes], (err, rows, fields) =>{
+    connection.query(sql,[userID ,blogTitle , blogdes , imageName], (err, rows, fields) =>{
         if(err){
             res.send("Error occured!!!")
         }
@@ -218,17 +268,22 @@ app.post('/blog', (req , res)=>{
 
 
 //-----------update a new post-------------
-app.put('/update' , (req,res)=>{
+app.put('/update' ,authorizatin, (req,res)=>{
     const {blogTitle , blogdes , postNo} = req.body;
     const {id:userID}=req.user;
+
+    console.log("inside api")
     
     if(blogTitle == undefined){
         let sql = "UPDATE blogtable SET blogdes = ? WHERE userID = ? and postNo=?";
         
         connection.query(sql , [blogdes , userID , postNo] , (err , rows , fields)=>
         {   
-            
-            res.send("Update successfull")
+            if(err){
+                 res.send("error")
+            }else{
+            res.send("Update successfull if")
+            }
             
         })
     }
@@ -237,7 +292,12 @@ app.put('/update' , (req,res)=>{
 
         connection.query(sql , [blogTitle , userID , postNo] , (err , rows , fields)=>
         {
-            res.send("Update successfull")
+            if(err){
+                res.send(err)
+            }else{
+
+            res.send("Update successfull else")
+            }
         })
     }
     else{
@@ -245,27 +305,33 @@ app.put('/update' , (req,res)=>{
 
         connection.query(sql , [blogTitle,blogdes , userID , postNo] , (err , rows , fields)=>
         {
-            res.send("Update successfull")
+            if(err){
+                res.send(err)
+            }else{
+            res.send("Update successfull last else")
+            }
         })
     }
  })
 
 
  //-----------search post-------------
- app.get('/post/search',(req,res)=>{
+ app.post('/search',authorizatin,(req,res)=>{
      const {FullName , blogTitle} = req.body;
      let sql = null;
      let temp = null;
-     if(FullName != undefined){
+     console.log(FullName)
+     console.log(blogTitle)
+     if(FullName != ""){
         temp = FullName;
-         sql = `Select blogTitle , FullName as Author , blogdes \
+         sql = `Select blogTitle , FullName as Author , blogdes , blogtable.imageName \
          from blogtable, userinfo where blogtable.userID = userinfo.userID and FullName Like  "%${temp}%"`;
          
      }
 
      else{
         temp = blogTitle;
-        sql = `Select blogTitle , FullName as Author , blogdes \
+        sql = `Select blogTitle , FullName as Author , blogdes ,blogtable.imageName \
         from blogtable, userinfo where blogtable.userID = userinfo.userID and blogTitle like "%${temp}%"`;
        
         console.log(temp)
@@ -280,24 +346,31 @@ app.put('/update' , (req,res)=>{
             res.send(rows);
         }
      })
- })
+ }) 
 
 
 
  //-----------delete apost-------------
- app.delete('/deletePost/:postNo',(req, res)=>{
+ app.delete('/deletePost/:postNo',authorizatin,(req, res)=>{
 
     const postNo = req.params.postNo;
     const {id:userID}=req.user;
-    console.log(userID)
-    console.log(postNo)
+    
+    
     connection.query("DELETE FROM blogtable WHERE userID = ? and postNo = ?",[userID , postNo], (err, rows, fields) =>{
+        
+        if(err){
+            
+            res.json(err);
+        }
+        else{
         res.send('Deleted Successfull');
+        }
      })
  })
 
 
-
+ 
 
  //-----------For unrecognized url-------------
  app.use((req,res)=>{
@@ -308,14 +381,16 @@ app.put('/update' , (req,res)=>{
 
 //-----------authentication for token-------------
 function authorizatin(req , res ,next){
-    //console.log("anythong")
+    
     const authHeader = req.headers['authorization']
+    console.log(authHeader)
     const token = authHeader && authHeader.split(' ')[1]
     if(token == null) return res.sendStatus(401)
     //console.log(user.name)
     jwt.verify( token , process.env.secretToken , (err,user) =>{
         if(err) return res.sendStatus(403)
         req.user = user
+        console.log("dhukse")
         next()
     })
 
