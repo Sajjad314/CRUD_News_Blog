@@ -15,6 +15,7 @@ import Profile from './Profile';
 import UserProfile from './UserProfile';
 import UpdatePost from './UpdatePost';
 import Search from './Search';
+import UpdateUser from './UpdateUser';
 
 
 
@@ -52,6 +53,13 @@ function App() {
             <Navbar/>
                 <div className='content'> 
                   <UserProfile/>
+                </div>
+            </Route>
+
+            <Route path="/updateProfile/:userName/:FullName/:password/:userID">
+            <Navbar/>
+                <div className='content'> 
+                  <UpdateUser/>
                 </div>
             </Route>
 
