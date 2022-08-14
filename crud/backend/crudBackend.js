@@ -32,8 +32,9 @@ app.use(express.json())
 const connection = mysql.createConnection({
   host: 'localhost',
   user: 'root',
-  password:'3141592654+sazzad@',
-  database: 'crudedb',
+  port:3307,
+  password:'15052000',
+  database: 'sajjad',
   
 });
 
@@ -88,7 +89,7 @@ app.post('/login',(req, res)=>{
                 res.json({auth:true , token: accessToken})
             }
             else{
-             res.json({auth:false , message:"Login Unsuccessfull!!"})
+             res.json({auth:false , message:"Login Unsuccessfull\nInvalid User name or Password!!"})
             }
 
        });
@@ -112,11 +113,11 @@ app.post('/sign-up',upload.single("image"),async(req, res)=>{
            
          connection.query(sql,[ userName , FullName , email ,hash , imageName ], (err, rows, fields) =>{
              if(err){
-                 res.send("sign up unsuccessfull !!!\nuserName , email and password must be unique and non empty")
+                 res.json({flag:false , message:"sign up unsuccessfull !!!\nUser Name already exist"})
                  console.log(err.message);
              }
              else{
-               res.send('SignUp Successfull');
+               res.json({flag:true , message:'SignUp Successfull'});
              }
           })  
        
@@ -156,7 +157,7 @@ app.post('/sign-up',upload.single("image"),async(req, res)=>{
 //-----------Show my profile-------------
 app.get('/user-me',authorizatin,(req, res)=>{
     console.log(req.user.id)
-    connection.query("SELECT userID , userName , FullName , email FROM userinfo WHERE userID = ?",[req.user.id], (err, rows, fields) =>{
+    connection.query("SELECT * FROM userinfo WHERE userID = ?",[req.user.id], (err, rows, fields) =>{
         res.send(rows);
      })
  })
@@ -180,38 +181,53 @@ app.get('/posts',authorizatin, (req , res)=>{
 
  //----- ------update profile-------------
 app.put('/users' ,authorizatin ,async(req,res)=>{
-
+    console.log("inside update")
     const {userName , FullName , password} = req.body;
     const {id:userID}=req.user;
     let temp = null;
     let sql = null;
     
     
-    if(userName != undefined){
-        sql = "Update userinfo set userName = ? where userID = ?";
-        temp = userName;
-    }
-    else if(FullName != undefined){
-        sql = "Update userinfo set FullName = ? where userID = ?";
-        temp = FullName;
-    }
-    else{
-        sql = "Update userinfo set password = ? where userID = ?";
+    // if(userName != undefined){
+    //     sql = "Update userinfo set userName = ? where userID = ?";
+    //     temp = userName;
+    // }
+    // else if(FullName != undefined){
+    //     sql = "Update userinfo set FullName = ? where userID = ?";
+    //     temp = FullName;
+    // }
+    // else if(password != undefined){
+    //     sql = "Update userinfo set password = ? where userID = ?";
+    //     const hash = await bcrypt.hash(password,10)
+    //     console.log(password , hash)
+    //     temp = hash;
+
+    // }
+    
+        sql = "Update userinfo set userName = ? , FullName = ? ,  password = ? where userID = ?";
         const hash = await bcrypt.hash(password,10)
         console.log(password , hash)
         temp = hash;
+        connection.query(sql,[userName , FullName , hash,userID],(err , rows , fields)=>{
 
-    }
+            if(err){
+                res.send("An error occurd!!!\nCheck your request again.")
+            }
+            else{
+                res.send("You have successfully updated your profile!!!!")
+            }
+        })
+    
 
-    connection.query(sql,[temp,userID],(err , rows , fields)=>{
+    // connection.query(sql,[temp,userID],(err , rows , fields)=>{
 
-        if(err){
-            res.send("An error occurd!!!\nCheck your request again.")
-        }
-        else{
-            res.send("You have successfully updated your profile!!!!")
-        }
-    })
+    //     if(err){
+    //         res.send("An error occurd!!!\nCheck your request again.")
+    //     }
+    //     else{
+    //         res.send("You have successfully updated your profile!!!!")
+    //     }
+    // })
 
 })
 
