@@ -12,6 +12,9 @@ const UserProfile = () => {
     const [ FullName , setFullname] = useState("");
     const [ userName , setUserName] = useState("");
     const [ email , setEmail] = useState("");
+    const [ password , setpassword] = useState("");
+    const [ userID , setUserID] = useState("");
+    const [ imageName , setImageName] = useState("");
     const [ isOk , setIsOk] = useState(false);
     const history = useHistory();
 
@@ -32,7 +35,7 @@ const UserProfile = () => {
     axios.delete('http://localhost:5000/deletePost/'+id , config)
     .then((res)=>{
         console.log(res)
-        history.push("/user-me")
+        window.location.reload();
     })
   }
 
@@ -49,7 +52,13 @@ const UserProfile = () => {
                 setEmail(res.data[0].email);
                 setFullname(res.data[0].FullName);
                 setUserName(res.data[0].userName);
+                setImageName(res.data[0].imageName);
+                setUserID(res.data[0].userID);
+                
+                setpassword(res.data[0].password);
+                console.log(userID);
                 setIsOk(true);
+                
                 
             })
    
@@ -61,10 +70,13 @@ const UserProfile = () => {
             <div className="userInfo">
             {isOk && <div className="preview"  >
                 
-                    <img src={require('./image/man.png')} />
+            <img src={`http://localhost:5000/images/${imageName}`}  height="350px" width="400px"/>
                     <h2>{FullName}</h2>
                     <p>user name : {userName}</p>
                     <p>Email : {email}</p>
+                    <Link to = {`/UpdateProfile/${userName}/${FullName}/${password}/${userID}`}>
+                        <button className="blogButton">Update Profile</button>
+                    </Link>
                     
                 
                 
