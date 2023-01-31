@@ -1,5 +1,4 @@
-// get the client
-
+//dependency
 const mysql = require('mysql2');
 const express = require('express');
 const jwt = require('jsonwebtoken');
@@ -9,9 +8,11 @@ var cors = require('cors');
 require('dotenv').config();
 const app = express();
 const path = require('path');
-
 const multer = require('multer');
 const { request } = require('http');
+
+
+
 
 const storage = multer.diskStorage({
     destination: (requests , file , cb) => {
@@ -25,16 +26,16 @@ const storage = multer.diskStorage({
 
 const upload = multer({storage : storage});
 
-app.use(cors())
+app.use(cors({ origin: "*", }))
 app.use(express.json())
 
 // Create the connection pool. The pool-specific settings are the defaults
 const connection = mysql.createConnection({
   host: 'localhost',
-  user: 'root',
-  port:3307,
-  password:'15052000',
-  database: 'sajjad',
+  user: process.env.user,
+  port:process.env.portNo,
+  password:process.env.password,
+  database: process.env.dbName,
   
 });
 
@@ -46,23 +47,15 @@ connection.connect((error)=>{
 });
 
 
-// app.post("/uploadImage" ,upload.single("image") ,(req , res)=>{
-    
-    
-    
-// })
 
-// app.get("/usersimg",(req,res)=>{
-//     res.send("1657707334877.png")
-// })
 
 app.use('/images', express.static('images'));
 
 
+
+//---------------------------------------------All API-----------------------------//
+
 //-----------login to profile-------------
-
-
-
 app.post('/login',(req, res)=>{
     
     const {userName , password} = req.body;
@@ -82,9 +75,6 @@ app.post('/login',(req, res)=>{
         if(result){
     
             const user = { id : rows[0].userID}
-            
-         //    console.log(user);
-            
              const accessToken = jwt.sign(user , process.env.secretToken);
                 res.json({auth:true , token: accessToken})
             }
@@ -127,9 +117,6 @@ app.post('/sign-up',upload.single("image"),async(req, res)=>{
 
 
 
-
-
-
 //-----------Show all users-------------
  app.get('/users',authorizatin,(req, res)=>{
     connection.query("SELECT userID , userName , FullName , email ,imageName FROM userinfo", (err, rows, fields) =>{
@@ -145,12 +132,6 @@ app.post('/sign-up',upload.single("image"),async(req, res)=>{
         res.send(rows);
      })
  })
-
-//  app.delete('/user/:userID',(req, res)=>{
-//     connection.query("DELETE FROM userinfo WHERE userID = ?",[req.params.userID], (err, rows, fields) =>{
-//         res.send('Deleted Successfull');
-//      })
-//  })
 
  
 
@@ -186,24 +167,6 @@ app.put('/users' ,authorizatin ,async(req,res)=>{
     const {id:userID}=req.user;
     let temp = null;
     let sql = null;
-    
-    
-    // if(userName != undefined){
-    //     sql = "Update userinfo set userName = ? where userID = ?";
-    //     temp = userName;
-    // }
-    // else if(FullName != undefined){
-    //     sql = "Update userinfo set FullName = ? where userID = ?";
-    //     temp = FullName;
-    // }
-    // else if(password != undefined){
-    //     sql = "Update userinfo set password = ? where userID = ?";
-    //     const hash = await bcrypt.hash(password,10)
-    //     console.log(password , hash)
-    //     temp = hash;
-
-    // }
-    
         sql = "Update userinfo set userName = ? , FullName = ? ,  password = ? where userID = ?";
         const hash = await bcrypt.hash(password,10)
         console.log(password , hash)
@@ -217,17 +180,6 @@ app.put('/users' ,authorizatin ,async(req,res)=>{
                 res.send("You have successfully updated your profile!!!!")
             }
         })
-    
-
-    // connection.query(sql,[temp,userID],(err , rows , fields)=>{
-
-    //     if(err){
-    //         res.send("An error occurd!!!\nCheck your request again.")
-    //     }
-    //     else{
-    //         res.send("You have successfully updated your profile!!!!")
-    //     }
-    // })
 
 })
 
@@ -288,8 +240,6 @@ app.put('/update' ,authorizatin, (req,res)=>{
     const {blogTitle , blogdes , postNo} = req.body;
     const {id:userID}=req.user;
 
-    console.log("inside api")
-    
     if(blogTitle == undefined){
         let sql = "UPDATE blogtable SET blogdes = ? WHERE userID = ? and postNo=?";
         
